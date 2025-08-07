@@ -91,6 +91,6 @@ def main(image_path):
 
 if __name__ == '__main__':
     # Example usage
-    test_image_path = "/gcs/SegMunich/train/img/39057.tif"  # Replace with your test image
+    test_image_path = "SegMunich_train_img_10.tif"  # Replace with your test image
     main(test_image_path)
     print('done')
