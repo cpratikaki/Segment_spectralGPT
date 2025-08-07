@@ -1,0 +1,8 @@
+services:
+  app:
+    image: segment_spectral:latest
+    volumes:
+      - ./checkpoint:/app/checkpoint
+    ports:
+      - "9999:9999"
+    command: ["python", "predict.py"]

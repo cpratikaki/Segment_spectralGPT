@@ -1,2 +1,4 @@
 checkpoint/
 !checkpoint/*.json
+
+.idea/
