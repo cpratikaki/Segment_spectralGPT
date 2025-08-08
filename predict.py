@@ -32,6 +32,65 @@ def preprocess_image(img):
     transform = transforms.ToTensor()
     return transform(img).unsqueeze(0)  # Add batch dim
 
+def map_prediction_to_original(pred):
+    """
+    Map model prediction (1–12 classes) back to the original mask codes
+    and compute class-wise percentages.
+    """
+    # Reverse of your forward mapping
+    reverse_map = {
+        0: 0,    # Background
+        1: 21,   # Arable land
+        2: 22,   # Permanent crops
+        3: 23,   # Pastures
+        4: 31,   # Forests
+        5: 5,    # Surface water
+        6: 32,   # Shrub
+        7: 33,   # Open spaces
+        8: 41,   # Wetlands
+        9: 13,   # Mine dump
+        10: 14,  # Artificial vegetation
+        11: 11,  # Urban fabric
+        12: 12   # Buildings
+    }
+
+    # Category descriptions
+    category_desc = {
+        0: "Background",
+        21: "Arable land",
+        22: "Permanent crops",
+        23: "Pastures",
+        31: "Forests",
+        5: "Surface water",
+        32: "Shrub",
+        33: "Open spaces",
+        41: "Wetlands",
+        13: "Mine dump",
+        14: "Artificial vegetation",
+        11: "Urban fabric",
+        12: "Buildings"
+    }
+
+    # Map back to original codes
+    mapped = np.zeros_like(pred, dtype=np.uint8)
+    for net_class, orig_class in reverse_map.items():
+        mapped[pred == net_class] = orig_class
+
+    # Compute class percentages
+    total_pixels = mapped.size
+    summary = []
+    for orig_code, desc in category_desc.items():
+        count = np.sum(mapped == orig_code)
+        if count > 0:
+            pct = (count / total_pixels) * 100
+            summary.append({
+                "orig_code": orig_code,
+                "description": desc,
+                "pixel_count": int(count),
+                "percentage": pct
+            })
+
+    return mapped, summary
 
 
 
@@ -83,7 +142,15 @@ def main(image_path):
 
         prediction = output['out'].argmax(1).squeeze(0).cpu().numpy().astype(np.uint8)
         print(prediction.shape)
-        # mapped_pred = map_prediction(prediction)
+        print("Unique values in prediction:", np.unique(prediction))
+     
+    
+    mapped_pred, summary = map_prediction_to_original(prediction)
+
+    print("\nClass distribution detected:")
+    for item in summary:
+        print(f"{item['description']}: {item['percentage']:.2f}%")
+       
 
     # ----- Visualize -----
     visualize_mask(prediction, palette)
